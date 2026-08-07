@@ -4,9 +4,9 @@ import (
 	"strings"
 	"time"
 
-	"fiber/internal/services"
-	"fiber/middleware"
-	"fiber/pkg/errorx"
+	"sumi/internal/services"
+	"sumi/middleware"
+	"sumi/pkg/errorx"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"

@@ -3,8 +3,8 @@ package handlers
 import (
 	"strconv"
 
-	"fiber/middleware"
-	"fiber/pkg/errorx"
+	"sumi/middleware"
+	"sumi/pkg/errorx"
 
 	"github.com/gofiber/fiber/v3"
 )

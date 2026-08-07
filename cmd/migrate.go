@@ -3,9 +3,9 @@ package cmd
 import (
 	"context"
 
-	"fiber/config"
-	"fiber/internal/database"
-	"fiber/pkg/logx"
+	"sumi/config"
+	"sumi/internal/database"
+	"sumi/pkg/logx"
 
 	"github.com/spf13/cobra"
 )

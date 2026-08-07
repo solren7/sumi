@@ -3,8 +3,8 @@ package middleware
 import (
 	"strings"
 
-	"fiber/internal/services"
-	"fiber/pkg/errorx"
+	"sumi/internal/services"
+	"sumi/pkg/errorx"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"

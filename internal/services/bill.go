@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"fiber/config"
-	"fiber/internal/repository/dbgen"
-	"fiber/pkg/errorx"
+	"sumi/config"
+	"sumi/internal/repository/dbgen"
+	"sumi/pkg/errorx"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"

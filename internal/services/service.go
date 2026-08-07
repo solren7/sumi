@@ -1,8 +1,8 @@
 package services
 
 import (
-	"fiber/config"
-	"fiber/internal/repository/dbgen"
+	"sumi/config"
+	"sumi/internal/repository/dbgen"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"

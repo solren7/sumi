@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"errors"
-	"fiber/pkg/errorx"
+	"sumi/pkg/errorx"
 
 	"github.com/gofiber/fiber/v3"
 )

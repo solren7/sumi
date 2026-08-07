@@ -2,7 +2,7 @@ package database
 
 import (
 	"context"
-	"fiber/config"
+	"sumi/config"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

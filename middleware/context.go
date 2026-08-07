@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"fiber/pkg/logx"
+	"sumi/pkg/logx"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"

@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"fiber/config"
-	"fiber/internal/apps"
+	"sumi/config"
+	"sumi/internal/apps"
 
 	"github.com/spf13/cobra"
 )

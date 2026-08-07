@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"fiber/config"
-	"fiber/internal/services"
+	"sumi/config"
+	"sumi/internal/services"
 )
 
 type Handler struct {

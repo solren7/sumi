@@ -1,6 +1,6 @@
 package main
 
-import "fiber/cmd"
+import "sumi/cmd"
 
 func main() {
 	cmd.Execute()

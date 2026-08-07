@@ -3,7 +3,7 @@ package middleware
 import (
 	"time"
 
-	"fiber/pkg/logx"
+	"sumi/pkg/logx"
 
 	"github.com/gofiber/fiber/v3"
 )

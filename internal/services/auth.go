@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"fiber/config"
-	"fiber/internal/cache"
-	"fiber/internal/repository/dbgen"
-	"fiber/pkg/errorx"
-	"fiber/pkg/utils"
+	"sumi/config"
+	"sumi/internal/cache"
+	"sumi/internal/repository/dbgen"
+	"sumi/pkg/errorx"
+	"sumi/pkg/utils"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"

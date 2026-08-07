@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"time"
 
-	"fiber/config"
-	"fiber/internal/cache"
-	"fiber/internal/repository/dbgen"
-	"fiber/pkg/utils"
+	"sumi/config"
+	"sumi/internal/cache"
+	"sumi/internal/repository/dbgen"
+	"sumi/pkg/utils"
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"

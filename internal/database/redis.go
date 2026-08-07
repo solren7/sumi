@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"fiber/config" // 替换为你实际的 config 包路径
+	"sumi/config" // 替换为你实际的 config 包路径
 
 	"github.com/redis/go-redis/v9"
 )

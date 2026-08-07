@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 
-	"fiber/config"
-	"fiber/internal/cache"
-	"fiber/internal/repository/dbgen"
+	"sumi/config"
+	"sumi/internal/cache"
+	"sumi/internal/repository/dbgen"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"

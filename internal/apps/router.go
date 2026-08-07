@@ -4,10 +4,10 @@ import (
 	"strings"
 	"time"
 
-	docs "fiber/docs"
-	"fiber/config"
-	"fiber/internal/handlers"
-	"fiber/middleware"
+	"sumi/config"
+	docs "sumi/docs"
+	"sumi/internal/handlers"
+	"sumi/middleware"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
