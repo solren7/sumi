@@ -7,6 +7,7 @@ import (
 
 	"sumi/config"
 	"sumi/internal/cache"
+	"sumi/internal/domain"
 	"sumi/internal/repository/dbgen"
 	"sumi/pkg/utils"
 
@@ -21,54 +22,11 @@ type StatsService struct {
 	rdb redis.UniversalClient
 }
 
-func NewStatsService(q *dbgen.Queries, cfg *config.Config, rdb redis.UniversalClient) *StatsService {
-	return &StatsService{q: q, cfg: cfg, rdb: rdb}
+func NewStatsService(deps Deps) *StatsService {
+	return &StatsService{q: deps.Queries, cfg: deps.Config, rdb: deps.Redis}
 }
 
-type MonthlyStatsItem struct {
-	Currency     string `json:"currency"`
-	TotalIncome  string `json:"total_income"`
-	TotalExpense string `json:"total_expense"`
-	NetAmount    string `json:"net_amount"`
-}
-
-type MonthlyStatsOutput struct {
-	Month string             `json:"month"`
-	Items []MonthlyStatsItem `json:"items"`
-}
-
-type DailyStatsItem struct {
-	Currency string `json:"currency"`
-	Income   string `json:"income"`
-	Expense  string `json:"expense"`
-}
-
-type DailyStatsDay struct {
-	Date  string           `json:"date"`
-	Items []DailyStatsItem `json:"items"`
-}
-
-type DailyStatsOutput struct {
-	Month string          `json:"month"`
-	Days  []DailyStatsDay `json:"days"`
-}
-
-type CategoryStatsItem struct {
-	ParentCategoryID   *int64  `json:"parent_category_id,omitempty"`
-	ParentCategoryName *string `json:"parent_category_name,omitempty"`
-	CategoryID         int64   `json:"category_id"`
-	CategoryName       string  `json:"category_name"`
-	Currency           string  `json:"currency"`
-	Amount             string  `json:"amount"`
-}
-
-type CategoryStatsOutput struct {
-	Month string              `json:"month"`
-	Type  int16               `json:"type"`
-	Items []CategoryStatsItem `json:"items"`
-}
-
-func (s *StatsService) GetMonthlyStats(ctx context.Context, userID uuid.UUID, month string) (*MonthlyStatsOutput, error) {
+func (s *StatsService) GetMonthlyStats(ctx context.Context, userID uuid.UUID, month string) (*domain.MonthlyStatsOutput, error) {
 	user, err := s.q.GetUserById(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -80,7 +38,7 @@ func (s *StatsService) GetMonthlyStats(ctx context.Context, userID uuid.UUID, mo
 	}
 
 	cacheKey := cache.MonthlyStatsKey(userID, monthKey)
-	var output MonthlyStatsOutput
+	var output domain.MonthlyStatsOutput
 	if ok := s.getCached(ctx, cacheKey, &output); ok {
 		return &output, nil
 	}
@@ -94,11 +52,11 @@ func (s *StatsService) GetMonthlyStats(ctx context.Context, userID uuid.UUID, mo
 		return nil, err
 	}
 
-	items := make([]MonthlyStatsItem, 0, len(rows))
+	items := make([]domain.MonthlyStatsItem, 0, len(rows))
 	for _, row := range rows {
 		income := utils.NumericToString(row.TotalIncome)
 		expense := utils.NumericToString(row.TotalExpense)
-		items = append(items, MonthlyStatsItem{
+		items = append(items, domain.MonthlyStatsItem{
 			Currency:     row.Currency,
 			TotalIncome:  income,
 			TotalExpense: expense,
@@ -106,7 +64,7 @@ func (s *StatsService) GetMonthlyStats(ctx context.Context, userID uuid.UUID, mo
 		})
 	}
 
-	output = MonthlyStatsOutput{
+	output = domain.MonthlyStatsOutput{
 		Month: monthKey,
 		Items: items,
 	}
@@ -114,7 +72,7 @@ func (s *StatsService) GetMonthlyStats(ctx context.Context, userID uuid.UUID, mo
 	return &output, nil
 }
 
-func (s *StatsService) GetDailyStats(ctx context.Context, userID uuid.UUID, month string) (*DailyStatsOutput, error) {
+func (s *StatsService) GetDailyStats(ctx context.Context, userID uuid.UUID, month string) (*domain.DailyStatsOutput, error) {
 	user, err := s.q.GetUserById(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -126,7 +84,7 @@ func (s *StatsService) GetDailyStats(ctx context.Context, userID uuid.UUID, mont
 	}
 
 	cacheKey := cache.DailyStatsKey(userID, monthKey)
-	var output DailyStatsOutput
+	var output domain.DailyStatsOutput
 	if ok := s.getCached(ctx, cacheKey, &output); ok {
 		return &output, nil
 	}
@@ -141,7 +99,7 @@ func (s *StatsService) GetDailyStats(ctx context.Context, userID uuid.UUID, mont
 		return nil, err
 	}
 
-	days := make([]DailyStatsDay, 0)
+	days := make([]domain.DailyStatsDay, 0)
 	dayIndex := map[string]int{}
 	for _, row := range rows {
 		dateStr := row.Date.Time.Format("2006-01-02")
@@ -149,20 +107,20 @@ func (s *StatsService) GetDailyStats(ctx context.Context, userID uuid.UUID, mont
 		if !exists {
 			idx = len(days)
 			dayIndex[dateStr] = idx
-			days = append(days, DailyStatsDay{
+			days = append(days, domain.DailyStatsDay{
 				Date:  dateStr,
-				Items: []DailyStatsItem{},
+				Items: []domain.DailyStatsItem{},
 			})
 		}
 
-		days[idx].Items = append(days[idx].Items, DailyStatsItem{
+		days[idx].Items = append(days[idx].Items, domain.DailyStatsItem{
 			Currency: row.Currency,
 			Income:   utils.NumericToString(row.Income),
 			Expense:  utils.NumericToString(row.Expense),
 		})
 	}
 
-	output = DailyStatsOutput{
+	output = domain.DailyStatsOutput{
 		Month: monthKey,
 		Days:  days,
 	}
@@ -170,7 +128,7 @@ func (s *StatsService) GetDailyStats(ctx context.Context, userID uuid.UUID, mont
 	return &output, nil
 }
 
-func (s *StatsService) GetCategoryStats(ctx context.Context, userID uuid.UUID, month string, billType int16) (*CategoryStatsOutput, error) {
+func (s *StatsService) GetCategoryStats(ctx context.Context, userID uuid.UUID, month string, billType int16) (*domain.CategoryStatsOutput, error) {
 	user, err := s.q.GetUserById(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -181,7 +139,7 @@ func (s *StatsService) GetCategoryStats(ctx context.Context, userID uuid.UUID, m
 	}
 
 	cacheKey := cache.CategoryStatsKey(userID, monthKey, billType)
-	var output CategoryStatsOutput
+	var output domain.CategoryStatsOutput
 	if ok := s.getCached(ctx, cacheKey, &output); ok {
 		return &output, nil
 	}
@@ -196,9 +154,9 @@ func (s *StatsService) GetCategoryStats(ctx context.Context, userID uuid.UUID, m
 		return nil, err
 	}
 
-	items := make([]CategoryStatsItem, 0, len(rows))
+	items := make([]domain.CategoryStatsItem, 0, len(rows))
 	for _, row := range rows {
-		items = append(items, CategoryStatsItem{
+		items = append(items, domain.CategoryStatsItem{
 			ParentCategoryID:   row.ParentCategoryID,
 			ParentCategoryName: row.ParentCategoryName,
 			CategoryID:         row.CategoryID,
@@ -208,7 +166,7 @@ func (s *StatsService) GetCategoryStats(ctx context.Context, userID uuid.UUID, m
 		})
 	}
 
-	output = CategoryStatsOutput{
+	output = domain.CategoryStatsOutput{
 		Month: monthKey,
 		Type:  billType,
 		Items: items,

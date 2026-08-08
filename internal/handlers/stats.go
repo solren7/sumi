@@ -16,7 +16,7 @@ import (
 // @Security BearerAuth
 // @Security ApiKeyAuth
 // @Param month query string false "Month in YYYY-MM"
-// @Success 200 {object} services.MonthlyStatsOutput
+// @Success 200 {object} domain.MonthlyStatsOutput
 // @Failure 401 {object} ErrorResponse
 // @Router /api/stats/monthly [get]
 // @Router /api/stats/home [get]
@@ -40,7 +40,7 @@ func (h *Handler) GetMonthlyStats(c fiber.Ctx) error {
 // @Security BearerAuth
 // @Security ApiKeyAuth
 // @Param month query string false "Month in YYYY-MM"
-// @Success 200 {object} services.DailyStatsOutput
+// @Success 200 {object} domain.DailyStatsOutput
 // @Failure 401 {object} ErrorResponse
 // @Router /api/stats/daily [get]
 func (h *Handler) GetDailyStats(c fiber.Ctx) error {
@@ -64,7 +64,7 @@ func (h *Handler) GetDailyStats(c fiber.Ctx) error {
 // @Security ApiKeyAuth
 // @Param month query string false "Month in YYYY-MM"
 // @Param type query int false "Transaction type: 1 expense, 2 income" default(1)
-// @Success 200 {object} services.CategoryStatsOutput
+// @Success 200 {object} domain.CategoryStatsOutput
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Router /api/stats/category [get]

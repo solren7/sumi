@@ -473,6 +473,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Case-insensitive substring match on description",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Start datetime (RFC3339)",
                         "name": "start_time",
                         "in": "query"
@@ -537,6 +543,62 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/handlers.BillResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/bills/batch": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Create multiple transactions atomically",
+                "parameters": [
+                    {
+                        "description": "Transactions payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.BatchCreateBillsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handlers.BillResponse"
+                            }
                         }
                     },
                     "400": {
@@ -741,7 +803,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/services.CategoryNode"
+                                "$ref": "#/definitions/domain.CategoryNode"
                             }
                         }
                     },
@@ -753,6 +815,63 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Create a second-level category",
+                "parameters": [
+                    {
+                        "description": "Category payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.CreateCategoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/domain.CategoryNode"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -815,7 +934,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/services.CategoryStatsOutput"
+                            "$ref": "#/definitions/domain.CategoryStatsOutput"
                         }
                     },
                     "400": {
@@ -862,7 +981,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/services.DailyStatsOutput"
+                            "$ref": "#/definitions/domain.DailyStatsOutput"
                         }
                     },
                     "401": {
@@ -903,7 +1022,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/services.MonthlyStatsOutput"
+                            "$ref": "#/definitions/domain.MonthlyStatsOutput"
                         }
                     },
                     "401": {
@@ -944,7 +1063,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/services.MonthlyStatsOutput"
+                            "$ref": "#/definitions/domain.MonthlyStatsOutput"
                         }
                     },
                     "401": {
@@ -1004,6 +1123,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Currency code",
                         "name": "currency",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Case-insensitive substring match on description",
+                        "name": "keyword",
                         "in": "query"
                     },
                     {
@@ -1072,6 +1197,62 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/handlers.BillResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transactions/batch": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Create multiple transactions atomically",
+                "parameters": [
+                    {
+                        "description": "Transactions payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.BatchCreateBillsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handlers.BillResponse"
+                            }
                         }
                     },
                     "400": {
@@ -1246,6 +1427,145 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "domain.CategoryNode": {
+            "type": "object",
+            "properties": {
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.CategoryNode"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "level": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.CategoryStatsItem": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "category_name": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "parent_category_id": {
+                    "type": "integer"
+                },
+                "parent_category_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.CategoryStatsOutput": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.CategoryStatsItem"
+                    }
+                },
+                "month": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.DailyStatsDay": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.DailyStatsItem"
+                    }
+                }
+            }
+        },
+        "domain.DailyStatsItem": {
+            "type": "object",
+            "properties": {
+                "currency": {
+                    "type": "string"
+                },
+                "expense": {
+                    "type": "string"
+                },
+                "income": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.DailyStatsOutput": {
+            "type": "object",
+            "properties": {
+                "days": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.DailyStatsDay"
+                    }
+                },
+                "month": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.MonthlyStatsItem": {
+            "type": "object",
+            "properties": {
+                "currency": {
+                    "type": "string"
+                },
+                "net_amount": {
+                    "type": "string"
+                },
+                "total_expense": {
+                    "type": "string"
+                },
+                "total_income": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.MonthlyStatsOutput": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.MonthlyStatsItem"
+                    }
+                },
+                "month": {
+                    "type": "string"
+                }
+            }
+        },
         "handlers.APIKeyResponse": {
             "type": "object",
             "properties": {
@@ -1303,6 +1623,17 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/handlers.UserResponse"
+                }
+            }
+        },
+        "handlers.BatchCreateBillsRequest": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.CreateBillRequest"
+                    }
                 }
             }
         },
@@ -1383,6 +1714,9 @@ const docTemplate = `{
                 "category_id": {
                     "type": "integer"
                 },
+                "category_name": {
+                    "type": "string"
+                },
                 "currency": {
                     "type": "string"
                 },
@@ -1390,6 +1724,23 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "occurred_at": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handlers.CreateCategoryRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "integer"
+                },
+                "parent_name": {
                     "type": "string"
                 },
                 "type": {
@@ -1471,6 +1822,9 @@ const docTemplate = `{
                 "category_id": {
                     "type": "integer"
                 },
+                "category_name": {
+                    "type": "string"
+                },
                 "currency": {
                     "type": "string"
                 },
@@ -1510,145 +1864,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        },
-        "services.CategoryNode": {
-            "type": "object",
-            "properties": {
-                "children": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/services.CategoryNode"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "level": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "parent_id": {
-                    "type": "integer"
-                },
-                "type": {
-                    "type": "integer"
-                }
-            }
-        },
-        "services.CategoryStatsItem": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "string"
-                },
-                "category_id": {
-                    "type": "integer"
-                },
-                "category_name": {
-                    "type": "string"
-                },
-                "currency": {
-                    "type": "string"
-                },
-                "parent_category_id": {
-                    "type": "integer"
-                },
-                "parent_category_name": {
-                    "type": "string"
-                }
-            }
-        },
-        "services.CategoryStatsOutput": {
-            "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/services.CategoryStatsItem"
-                    }
-                },
-                "month": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "integer"
-                }
-            }
-        },
-        "services.DailyStatsDay": {
-            "type": "object",
-            "properties": {
-                "date": {
-                    "type": "string"
-                },
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/services.DailyStatsItem"
-                    }
-                }
-            }
-        },
-        "services.DailyStatsItem": {
-            "type": "object",
-            "properties": {
-                "currency": {
-                    "type": "string"
-                },
-                "expense": {
-                    "type": "string"
-                },
-                "income": {
-                    "type": "string"
-                }
-            }
-        },
-        "services.DailyStatsOutput": {
-            "type": "object",
-            "properties": {
-                "days": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/services.DailyStatsDay"
-                    }
-                },
-                "month": {
-                    "type": "string"
-                }
-            }
-        },
-        "services.MonthlyStatsItem": {
-            "type": "object",
-            "properties": {
-                "currency": {
-                    "type": "string"
-                },
-                "net_amount": {
-                    "type": "string"
-                },
-                "total_expense": {
-                    "type": "string"
-                },
-                "total_income": {
-                    "type": "string"
-                }
-            }
-        },
-        "services.MonthlyStatsOutput": {
-            "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/services.MonthlyStatsItem"
-                    }
-                },
-                "month": {
-                    "type": "string"
-                }
-            }
         }
     },
     "securityDefinitions": {
@@ -1677,6 +1892,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "Accounting app backend API for auth, categories, transactions, stats, and API keys.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {

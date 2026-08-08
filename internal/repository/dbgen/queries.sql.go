@@ -683,8 +683,9 @@ WHERE user_id = $1
   AND ($4::char(3) IS NULL OR currency = $4::char(3))
   AND ($5::timestamptz IS NULL OR occurred_at >= $5::timestamptz)
   AND ($6::timestamptz IS NULL OR occurred_at < $6::timestamptz)
+  AND ($7::text IS NULL OR description ILIKE $7::text)
 ORDER BY occurred_at DESC
-LIMIT $8 OFFSET $7
+LIMIT $9 OFFSET $8
 `
 
 type ListBillsParams struct {
@@ -694,6 +695,7 @@ type ListBillsParams struct {
 	Currency    *string            `json:"currency"`
 	StartTime   pgtype.Timestamptz `json:"start_time"`
 	EndTime     pgtype.Timestamptz `json:"end_time"`
+	Keyword     *string            `json:"keyword"`
 	OffsetCount int32              `json:"offset_count"`
 	LimitCount  int32              `json:"limit_count"`
 }
@@ -706,6 +708,7 @@ func (q *Queries) ListBills(ctx context.Context, arg ListBillsParams) ([]Bill, e
 		arg.Currency,
 		arg.StartTime,
 		arg.EndTime,
+		arg.Keyword,
 		arg.OffsetCount,
 		arg.LimitCount,
 	)

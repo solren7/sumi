@@ -9,14 +9,15 @@ import (
 
 	"sumi/config"
 	"sumi/internal/cache"
+	"sumi/internal/domain"
 	"sumi/internal/repository/dbgen"
 	"sumi/pkg/errorx"
 	"sumi/pkg/utils"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -35,13 +36,13 @@ type refreshTokenCacheValue struct {
 
 type AuthService struct {
 	pool *pgxpool.Pool
-	q   *dbgen.Queries
-	cfg *config.Config
-	rdb redis.UniversalClient
+	q    *dbgen.Queries
+	cfg  *config.Config
+	rdb  redis.UniversalClient
 }
 
-func NewAuthService(pool *pgxpool.Pool, q *dbgen.Queries, cfg *config.Config, rdb redis.UniversalClient) *AuthService {
-	return &AuthService{pool: pool, q: q, cfg: cfg, rdb: rdb}
+func NewAuthService(deps Deps) *AuthService {
+	return &AuthService{pool: deps.Pool, q: deps.Queries, cfg: deps.Config, rdb: deps.Redis}
 }
 
 type RegisterInput struct {
@@ -89,17 +90,11 @@ func (s *AuthService) CheckEmailExists(ctx context.Context, email string) (bool,
 
 func (s *AuthService) Register(ctx context.Context, input RegisterInput, meta SessionMeta) (*AuthOutput, error) {
 	email := normalizeEmail(input.Email)
-	if email == "" || strings.TrimSpace(input.Password) == "" {
-		return nil, errorx.New(400, "Email and password are required")
+	if err := domain.ValidateCredentials(email, input.Password); err != nil {
+		return nil, err
 	}
-	if len(input.Password) < 8 {
-		return nil, errorx.New(400, "Password must be at least 8 characters")
-	}
-	if len(input.Password) > 128 {
-		return nil, errorx.New(400, "Password must be at most 128 characters")
-	}
-	if len(input.Username) > 64 {
-		return nil, errorx.New(400, "Username must be at most 64 characters")
+	if err := domain.ValidateUsername(input.Username); err != nil {
+		return nil, err
 	}
 
 	exists, err := s.CheckEmailExists(ctx, email)
@@ -212,7 +207,7 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 	return nil
 }
 
-func (s *AuthService) GetMe(ctx context.Context, userID uuid.UUID) (*dbgen.User, error) {
+func (s *AuthService) GetMe(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
 	user, err := s.q.GetUserById(ctx, userID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -220,7 +215,8 @@ func (s *AuthService) GetMe(ctx context.Context, userID uuid.UUID) (*dbgen.User,
 		}
 		return nil, err
 	}
-	return &user, nil
+	domain := userFromRow(user)
+	return &domain, nil
 }
 
 func (s *AuthService) ParseAccessToken(tokenString string) (*utils.Claims, error) {

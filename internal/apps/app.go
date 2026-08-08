@@ -19,9 +19,10 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/recover"
 )
 
-func StartAPIServer(cfg *config.Config) {
-	logx.Configure(cfg.LogFormat)
-
+// NewFiberApp assembles the HTTP app (middleware, handlers, routes) without
+// starting it or touching the process lifecycle, so tests can drive the real
+// stack through app.Test without binding a port.
+func NewFiberApp(cfg *config.Config, svc *services.Service) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:      "MyFiberApp",
 		ReadTimeout:  10 * time.Second,
@@ -35,6 +36,14 @@ func StartAPIServer(cfg *config.Config) {
 			logx.Panicf("Panic: %v", e)
 		},
 	}))
+
+	handler := handlers.NewHandler(svc, cfg)
+	RegisterRoutes(app, handler, cfg)
+	return app
+}
+
+func StartAPIServer(cfg *config.Config) {
+	logx.Configure(cfg.LogFormat)
 
 	// 1. 初始化数据库 (增加错误处理)
 	logx.Info("Connecting to database...")
@@ -67,13 +76,10 @@ func StartAPIServer(cfg *config.Config) {
 
 	// 3. Initialize Services
 	queries := dbgen.New(dbPool)
-	svc := services.NewService(dbPool, queries, cfg, rdb)
+	svc := services.NewService(services.Deps{Pool: dbPool, Queries: queries, Config: cfg, Redis: rdb})
 
-	// 4. Initialize Handlers
-	handler := handlers.NewHandler(svc, cfg)
-
-	// 5. Register Routes
-	RegisterRoutes(app, handler, cfg)
+	// 4. Assemble handlers and routes
+	app := NewFiberApp(cfg, svc)
 
 	// 3. 准备启动 HTTP 服务
 	// 创建一个专门接收 Server 启动错误的通道

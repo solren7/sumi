@@ -89,8 +89,9 @@ func RegisterRoutes(app *fiber.App, handler *handlers.Handler, cfg *config.Confi
 	apiKeys.Post("/:id/revoke", handler.RevokeAPIKey)
 	apiKeys.Delete("/:id", handler.DeleteAPIKey)
 
-	categories := api.Group("/categories", middleware.JWTOrAPIKey(handler.S.Auth, handler.S.APIKey, "categories:read"))
-	categories.Get("/", handler.ListCategories)
+	categories := api.Group("/categories")
+	categories.Get("/", middleware.JWTOrAPIKey(handler.S.Auth, handler.S.APIKey, "categories:read"), handler.ListCategories)
+	categories.Post("/", middleware.JWTOrAPIKey(handler.S.Auth, handler.S.APIKey, "categories:write"), handler.CreateCategory)
 
 	authenticatedBills := middleware.JWTOrAPIKey(handler.S.Auth, handler.S.APIKey, "transactions:read")
 	writeBills := middleware.JWTOrAPIKey(handler.S.Auth, handler.S.APIKey, "transactions:write")
@@ -102,6 +103,7 @@ func RegisterRoutes(app *fiber.App, handler *handlers.Handler, cfg *config.Confi
 	bills.Get("/", authenticatedBills, handler.ListBills)
 	bills.Get("/:id", authenticatedBills, handler.GetBill)
 	bills.Post("/", writeBills, handler.CreateBill)
+	bills.Post("/batch", writeBills, handler.BatchCreateBills)
 	bills.Put("/:id", updateBills, handler.UpdateBill)
 	bills.Delete("/:id", deleteBills, handler.DeleteBill)
 
@@ -109,6 +111,7 @@ func RegisterRoutes(app *fiber.App, handler *handlers.Handler, cfg *config.Confi
 	transactions.Get("/", authenticatedBills, handler.ListBills)
 	transactions.Get("/:id", authenticatedBills, handler.GetBill)
 	transactions.Post("/", writeBills, handler.CreateBill)
+	transactions.Post("/batch", writeBills, handler.BatchCreateBills)
 	transactions.Put("/:id", updateBills, handler.UpdateBill)
 	transactions.Delete("/:id", deleteBills, handler.DeleteBill)
 

@@ -3,7 +3,7 @@ package handlers
 import (
 	"time"
 
-	"sumi/internal/repository/dbgen"
+	"sumi/internal/domain"
 	"sumi/internal/services"
 	"sumi/middleware"
 	"sumi/pkg/errorx"
@@ -13,9 +13,9 @@ import (
 )
 
 type CreateAPIKeyRequest struct {
-	Name      string    `json:"name"`
-	Scopes    []string  `json:"scopes"`
-	ExpiresAt *string   `json:"expires_at"`
+	Name      string   `json:"name"`
+	Scopes    []string `json:"scopes"`
+	ExpiresAt *string  `json:"expires_at"`
 }
 
 type APIKeyResponse struct {
@@ -147,22 +147,22 @@ func (h *Handler) DeleteAPIKey(c fiber.Ctx) error {
 	return h.RevokeAPIKey(c)
 }
 
-func toAPIKeyResponse(item dbgen.ApiKey) APIKeyResponse {
+func toAPIKeyResponse(item domain.APIKey) APIKeyResponse {
 	var lastUsedAt *string
-	if item.LastUsedAt.Valid {
-		value := item.LastUsedAt.Time.Format(time.RFC3339)
+	if item.LastUsedAt != nil {
+		value := item.LastUsedAt.Format(time.RFC3339)
 		lastUsedAt = &value
 	}
 	var expiresAt *string
-	if item.ExpiresAt.Valid {
-		value := item.ExpiresAt.Time.Format(time.RFC3339)
+	if item.ExpiresAt != nil {
+		value := item.ExpiresAt.Format(time.RFC3339)
 		expiresAt = &value
 	}
 
 	return APIKeyResponse{
 		ID:         item.ID.String(),
 		Name:       item.Name,
-		Prefix:     item.KeyPrefix,
+		Prefix:     item.Prefix,
 		Scopes:     item.Scopes,
 		Status:     item.Status,
 		LastUsedAt: lastUsedAt,

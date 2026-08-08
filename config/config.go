@@ -10,13 +10,13 @@ import (
 
 // Insecure placeholder values that must be overridden in production.
 var insecureDefaults = map[string]string{
-	"JWT_SECRET":            "secret",
-	"REFRESH_TOKEN_PEPPER":  "refresh-pepper",
-	"API_KEY_PEPPER":        "api-key-pepper",
+	"JWT_SECRET":           "secret",
+	"REFRESH_TOKEN_PEPPER": "refresh-pepper",
+	"API_KEY_PEPPER":       "api-key-pepper",
 }
 
 type Config struct {
-	DBDSN                  string        `env:"DB_DSN"`
+	DBDSN                  string `env:"DB_DSN"`
 	RedisConfig            RedisConfig
 	ServerPort             string        `env:"SERVER_PORT" envDefault:":3000"`
 	LogFormat              string        `env:"LOG_FORMAT" envDefault:"json"`
@@ -40,7 +40,7 @@ type Config struct {
 
 type RedisConfig struct {
 	// 基础连接信息
-	RedisURL     string `env:"REDIS_URL" envDefault:"redis://localhost:6379/0"`
+	RedisURL string `env:"REDIS_URL" envDefault:"redis://localhost:6379/0"`
 
 	// 超时设置 (配置库会自动解析 "10s", "500ms" 等字符串为 time.Duration)
 	DialTimeout  time.Duration `env:"REDIS_DIAL_TIMEOUT" envDefault:"5s"`

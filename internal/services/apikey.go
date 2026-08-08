@@ -8,6 +8,7 @@ import (
 
 	"sumi/config"
 	"sumi/internal/cache"
+	"sumi/internal/domain"
 	"sumi/internal/repository/dbgen"
 	"sumi/pkg/errorx"
 	"sumi/pkg/utils"
@@ -42,7 +43,7 @@ type CreateAPIKeyInput struct {
 }
 
 type CreatedAPIKey struct {
-	Record *dbgen.ApiKey
+	Record *domain.APIKey
 	Key    string
 }
 
@@ -52,14 +53,14 @@ type APIKeyService struct {
 	rdb redis.UniversalClient
 }
 
-func NewAPIKeyService(q *dbgen.Queries, cfg *config.Config, rdb redis.UniversalClient) *APIKeyService {
-	return &APIKeyService{q: q, cfg: cfg, rdb: rdb}
+func NewAPIKeyService(deps Deps) *APIKeyService {
+	return &APIKeyService{q: deps.Queries, cfg: deps.Config, rdb: deps.Redis}
 }
 
 func (s *APIKeyService) Create(ctx context.Context, userID uuid.UUID, input CreateAPIKeyInput) (*CreatedAPIKey, error) {
-	name := strings.TrimSpace(input.Name)
-	if name == "" {
-		return nil, errorx.New(400, "API key name is required")
+	name, err := domain.ValidateAPIKeyName(input.Name)
+	if err != nil {
+		return nil, err
 	}
 
 	raw, err := utils.GenerateOpaqueToken(32)
@@ -91,21 +92,24 @@ func (s *APIKeyService) Create(ctx context.Context, userID uuid.UUID, input Crea
 	}
 
 	_ = s.cacheAPIKey(ctx, record)
+	created := apiKeyFromRow(record)
 	return &CreatedAPIKey{
-		Record: &record,
+		Record: &created,
 		Key:    fullKey,
 	}, nil
 }
 
-func (s *APIKeyService) List(ctx context.Context, userID uuid.UUID) ([]dbgen.ApiKey, error) {
-	items, err := s.q.ListAPIKeysByUser(ctx, userID)
+func (s *APIKeyService) List(ctx context.Context, userID uuid.UUID) ([]domain.APIKey, error) {
+	rows, err := s.q.ListAPIKeysByUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	if items == nil {
-		return []dbgen.ApiKey{}, nil
+
+	keys := make([]domain.APIKey, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, apiKeyFromRow(row))
 	}
-	return items, nil
+	return keys, nil
 }
 
 func (s *APIKeyService) Revoke(ctx context.Context, userID, apiKeyID uuid.UUID) error {

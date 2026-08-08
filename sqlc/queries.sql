@@ -131,6 +131,7 @@ WHERE user_id = sqlc.arg(user_id)
   AND (sqlc.narg(currency)::char(3) IS NULL OR currency = sqlc.narg(currency)::char(3))
   AND (sqlc.narg(start_time)::timestamptz IS NULL OR occurred_at >= sqlc.narg(start_time)::timestamptz)
   AND (sqlc.narg(end_time)::timestamptz IS NULL OR occurred_at < sqlc.narg(end_time)::timestamptz)
+  AND (sqlc.narg(keyword)::text IS NULL OR description ILIKE sqlc.narg(keyword)::text)
 ORDER BY occurred_at DESC
 LIMIT sqlc.arg(limit_count) OFFSET sqlc.arg(offset_count);
 

@@ -8,6 +8,18 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// Deps is the shared infrastructure every service is built from. It is a struct
+// rather than a positional parameter list so adding a dependency does not change
+// the signature of every constructor and its call sites.
+//
+// Pool is only needed by services that run multi-statement transactions.
+type Deps struct {
+	Pool    *pgxpool.Pool
+	Queries *dbgen.Queries
+	Config  *config.Config
+	Redis   redis.UniversalClient
+}
+
 type Service struct {
 	Auth     *AuthService
 	APIKey   *APIKeyService
@@ -16,14 +28,14 @@ type Service struct {
 	Stats    *StatsService
 }
 
-func NewService(pool *pgxpool.Pool, q *dbgen.Queries, cfg *config.Config, rdb redis.UniversalClient) *Service {
-	statsSvc := NewStatsService(q, cfg, rdb)
+func NewService(deps Deps) *Service {
+	statsSvc := NewStatsService(deps)
 
 	return &Service{
-		Auth:     NewAuthService(pool, q, cfg, rdb),
-		APIKey:   NewAPIKeyService(q, cfg, rdb),
-		Category: NewCategoryService(q, cfg, rdb),
-		Bill:     NewBillService(q, cfg, rdb, statsSvc),
+		Auth:     NewAuthService(deps),
+		APIKey:   NewAPIKeyService(deps),
+		Category: NewCategoryService(deps),
+		Bill:     NewBillService(deps, statsSvc),
 		Stats:    statsSvc,
 	}
 }

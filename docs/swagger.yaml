@@ -1,5 +1,95 @@
 basePath: /
 definitions:
+  domain.CategoryNode:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/domain.CategoryNode'
+        type: array
+      id:
+        type: integer
+      level:
+        type: integer
+      name:
+        type: string
+      parent_id:
+        type: integer
+      type:
+        type: integer
+    type: object
+  domain.CategoryStatsItem:
+    properties:
+      amount:
+        type: string
+      category_id:
+        type: integer
+      category_name:
+        type: string
+      currency:
+        type: string
+      parent_category_id:
+        type: integer
+      parent_category_name:
+        type: string
+    type: object
+  domain.CategoryStatsOutput:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/domain.CategoryStatsItem'
+        type: array
+      month:
+        type: string
+      type:
+        type: integer
+    type: object
+  domain.DailyStatsDay:
+    properties:
+      date:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/domain.DailyStatsItem'
+        type: array
+    type: object
+  domain.DailyStatsItem:
+    properties:
+      currency:
+        type: string
+      expense:
+        type: string
+      income:
+        type: string
+    type: object
+  domain.DailyStatsOutput:
+    properties:
+      days:
+        items:
+          $ref: '#/definitions/domain.DailyStatsDay'
+        type: array
+      month:
+        type: string
+    type: object
+  domain.MonthlyStatsItem:
+    properties:
+      currency:
+        type: string
+      net_amount:
+        type: string
+      total_expense:
+        type: string
+      total_income:
+        type: string
+    type: object
+  domain.MonthlyStatsOutput:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/domain.MonthlyStatsItem'
+        type: array
+      month:
+        type: string
+    type: object
   handlers.APIKeyResponse:
     properties:
       created_at:
@@ -38,6 +128,13 @@ definitions:
         type: string
       user:
         $ref: '#/definitions/handlers.UserResponse'
+    type: object
+  handlers.BatchCreateBillsRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/handlers.CreateBillRequest'
+        type: array
     type: object
   handlers.BillResponse:
     properties:
@@ -89,11 +186,24 @@ definitions:
         type: string
       category_id:
         type: integer
+      category_name:
+        type: string
       currency:
         type: string
       description:
         type: string
       occurred_at:
+        type: string
+      type:
+        type: integer
+    type: object
+  handlers.CreateCategoryRequest:
+    properties:
+      name:
+        type: string
+      parent_id:
+        type: integer
+      parent_name:
         type: string
       type:
         type: integer
@@ -146,6 +256,8 @@ definitions:
         type: string
       category_id:
         type: integer
+      category_name:
+        type: string
       currency:
         type: string
       description:
@@ -170,96 +282,6 @@ definitions:
       updated_at:
         type: string
       username:
-        type: string
-    type: object
-  services.CategoryNode:
-    properties:
-      children:
-        items:
-          $ref: '#/definitions/services.CategoryNode'
-        type: array
-      id:
-        type: integer
-      level:
-        type: integer
-      name:
-        type: string
-      parent_id:
-        type: integer
-      type:
-        type: integer
-    type: object
-  services.CategoryStatsItem:
-    properties:
-      amount:
-        type: string
-      category_id:
-        type: integer
-      category_name:
-        type: string
-      currency:
-        type: string
-      parent_category_id:
-        type: integer
-      parent_category_name:
-        type: string
-    type: object
-  services.CategoryStatsOutput:
-    properties:
-      items:
-        items:
-          $ref: '#/definitions/services.CategoryStatsItem'
-        type: array
-      month:
-        type: string
-      type:
-        type: integer
-    type: object
-  services.DailyStatsDay:
-    properties:
-      date:
-        type: string
-      items:
-        items:
-          $ref: '#/definitions/services.DailyStatsItem'
-        type: array
-    type: object
-  services.DailyStatsItem:
-    properties:
-      currency:
-        type: string
-      expense:
-        type: string
-      income:
-        type: string
-    type: object
-  services.DailyStatsOutput:
-    properties:
-      days:
-        items:
-          $ref: '#/definitions/services.DailyStatsDay'
-        type: array
-      month:
-        type: string
-    type: object
-  services.MonthlyStatsItem:
-    properties:
-      currency:
-        type: string
-      net_amount:
-        type: string
-      total_expense:
-        type: string
-      total_income:
-        type: string
-    type: object
-  services.MonthlyStatsOutput:
-    properties:
-      items:
-        items:
-          $ref: '#/definitions/services.MonthlyStatsItem'
-        type: array
-      month:
         type: string
     type: object
 info:
@@ -549,6 +571,10 @@ paths:
         in: query
         name: currency
         type: string
+      - description: Case-insensitive substring match on description
+        in: query
+        name: keyword
+        type: string
       - description: Start datetime (RFC3339)
         in: query
         name: start_time
@@ -702,6 +728,40 @@ paths:
       summary: Update transaction
       tags:
       - Transactions
+  /api/bills/batch:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Transactions payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.BatchCreateBillsRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/handlers.BillResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: Create multiple transactions atomically
+      tags:
+      - Transactions
   /api/categories:
     get:
       parameters:
@@ -717,7 +777,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/services.CategoryNode'
+              $ref: '#/definitions/domain.CategoryNode'
             type: array
         "400":
           description: Bad Request
@@ -731,6 +791,41 @@ paths:
       - BearerAuth: []
       - ApiKeyAuth: []
       summary: List system categories
+      tags:
+      - Categories
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Category payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.CategoryNode'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: Create a second-level category
       tags:
       - Categories
   /api/ping:
@@ -763,7 +858,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/services.CategoryStatsOutput'
+            $ref: '#/definitions/domain.CategoryStatsOutput'
         "400":
           description: Bad Request
           schema:
@@ -791,7 +886,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/services.DailyStatsOutput'
+            $ref: '#/definitions/domain.DailyStatsOutput'
         "401":
           description: Unauthorized
           schema:
@@ -815,7 +910,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/services.MonthlyStatsOutput'
+            $ref: '#/definitions/domain.MonthlyStatsOutput'
         "401":
           description: Unauthorized
           schema:
@@ -839,7 +934,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/services.MonthlyStatsOutput'
+            $ref: '#/definitions/domain.MonthlyStatsOutput'
         "401":
           description: Unauthorized
           schema:
@@ -874,6 +969,10 @@ paths:
       - description: Currency code
         in: query
         name: currency
+        type: string
+      - description: Case-insensitive substring match on description
+        in: query
+        name: keyword
         type: string
       - description: Start datetime (RFC3339)
         in: query
@@ -1026,6 +1125,40 @@ paths:
       - BearerAuth: []
       - ApiKeyAuth: []
       summary: Update transaction
+      tags:
+      - Transactions
+  /api/transactions/batch:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Transactions payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.BatchCreateBillsRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/handlers.BillResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: Create multiple transactions atomically
       tags:
       - Transactions
 schemes:
