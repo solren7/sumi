@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 // defaultKeyScopes is everything the sumi skill needs, so `auth key create --name x`
@@ -37,9 +38,17 @@ type authResponse struct {
 
 var authCmd = groupCommand("auth", "Log in and manage API keys, storing credentials locally")
 
-// readPassword takes the password from stdin when --password-stdin is set, which
-// keeps it out of the process list and shell history.
-func readPassword(cmd *cobra.Command) (string, error) {
+// readPassword resolves the password from, in order: --password-stdin (for
+// scripts and agents), --password (convenient but visible in the process list),
+// or an interactive prompt with echo disabled.
+//
+// The prompt is the default for a person at a terminal because the shell tricks
+// that avoid leaking a password into history differ between bash and fish; asking
+// here works the same everywhere.
+//
+// confirm asks twice, which registration needs: a typo in an unechoed password
+// would create an account nobody can log into.
+func readPassword(cmd *cobra.Command, confirm bool) (string, error) {
 	fromStdin, _ := cmd.Flags().GetBool("password-stdin")
 	inline, _ := cmd.Flags().GetString("password")
 
@@ -58,10 +67,48 @@ func readPassword(cmd *cobra.Command) (string, error) {
 		return password, nil
 	}
 
-	if strings.TrimSpace(inline) == "" {
-		return "", fmt.Errorf("password is required: pass --password-stdin (preferred) or --password")
+	if strings.TrimSpace(inline) != "" {
+		return inline, nil
 	}
-	return inline, nil
+
+	password, err := promptPassword("Password: ")
+	if err != nil {
+		return "", err
+	}
+	if password == "" {
+		return "", fmt.Errorf("no password entered")
+	}
+	if confirm {
+		again, err := promptPassword("Confirm password: ")
+		if err != nil {
+			return "", err
+		}
+		if again != password {
+			return "", fmt.Errorf("the two passwords do not match")
+		}
+	}
+	return password, nil
+}
+
+// promptPassword reads one line from the terminal without echoing it.
+//
+// It refuses to prompt when stdin is not a terminal, so a non-interactive caller
+// (a script, CI, an agent) gets an actionable error instead of hanging forever on
+// a prompt nobody can see. The prompt itself goes to stderr to keep the stdout
+// contract intact: a successful command prints only its JSON document.
+func promptPassword(prompt string) (string, error) {
+	fd := int(os.Stdin.Fd())
+	if !term.IsTerminal(fd) {
+		return "", fmt.Errorf("no password given and stdin is not a terminal: pass --password-stdin (preferred) or --password")
+	}
+
+	fmt.Fprint(os.Stderr, prompt)
+	raw, err := term.ReadPassword(fd)
+	fmt.Fprintln(os.Stderr)
+	if err != nil {
+		return "", fmt.Errorf("cannot read password: %w", err)
+	}
+	return string(raw), nil
 }
 
 // persistSession stores the token pair and identity, replacing whatever session
@@ -83,8 +130,8 @@ func persistSession(session authResponse) (string, error) {
 	return path, nil
 }
 
-func runSessionCommand(cmd *cobra.Command, path string, body map[string]string) error {
-	password, err := readPassword(cmd)
+func runSessionCommand(cmd *cobra.Command, path string, body map[string]string, confirmPassword bool) error {
+	password, err := readPassword(cmd, confirmPassword)
 	if err != nil {
 		return err
 	}
@@ -134,7 +181,7 @@ var authRegisterCmd = &cobra.Command{
 		if username, _ := cmd.Flags().GetString("username"); strings.TrimSpace(username) != "" {
 			body["username"] = strings.TrimSpace(username)
 		}
-		return runSessionCommand(cmd, "/api/auth/register", body)
+		return runSessionCommand(cmd, "/api/auth/register", body, true)
 	},
 }
 
@@ -142,7 +189,7 @@ var authLoginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Log in and store the session locally",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runSessionCommand(cmd, "/api/auth/login", map[string]string{})
+		return runSessionCommand(cmd, "/api/auth/login", map[string]string{}, false)
 	},
 }
 
@@ -352,8 +399,8 @@ func credentialSource(envName, stored string) string {
 func init() {
 	for _, cmd := range []*cobra.Command{authRegisterCmd, authLoginCmd} {
 		cmd.Flags().String("email", "", "Account email (required)")
-		cmd.Flags().String("password", "", "Password (visible in the process list; prefer --password-stdin)")
-		cmd.Flags().Bool("password-stdin", false, "Read the password from stdin")
+		cmd.Flags().String("password", "", "Password (visible in the process list; omit to be prompted)")
+		cmd.Flags().Bool("password-stdin", false, "Read the password from stdin (for scripts and agents)")
 	}
 	authRegisterCmd.Flags().String("username", "", "Display name (default: the local part of the email)")
 

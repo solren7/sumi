@@ -184,6 +184,7 @@ An agent container gets the client in one of two ways:
   which is the same binary.
 
 ```bash
+sumi auth login --email me@example.com          # prompts for the password (no echo)
 printf '%s' "$PW" | sumi auth login --email me@example.com --password-stdin
 sumi auth key create --name my-agent   # stores the key locally; no env vars needed after this
 sumi auth status                       # which credential is in effect, and is it valid
@@ -228,6 +229,13 @@ and the category tree once instead of once per row.
   `http://localhost:3000`) and `SUMI_API_KEY` override whatever `sumi auth` stored
   in `~/.config/sumi/config.json` (`SUMI_CONFIG` moves it, `XDG_CONFIG_HOME` is
   honoured). The file is written 0600 via a temp-file rename.
+- `auth login`/`auth register` take the password from `--password-stdin` (scripts and
+  agents), `--password` (visible in the process list), or an interactive prompt with
+  echo disabled. The prompt is the default for a person because the shell tricks that
+  keep a password out of history differ between bash and fish; it refuses to prompt
+  when stdin is not a terminal, so a non-interactive caller errors instead of hanging.
+  `register` asks twice, since a typo in an unechoed password would create an account
+  nobody can log into.
 - Data commands authenticate with `X-API-Key`; `sumi auth` uses a bearer token,
   because API keys cannot manage sessions or other keys. An expired access token is
   refreshed once automatically and the new pair written back to the config.

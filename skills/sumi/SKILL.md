@@ -31,6 +31,8 @@ printf '%s' "$PASSWORD" | sumi auth login --email me@example.com --password-stdi
 sumi auth key create --name my-agent
 ```
 
+`--password-stdin` 是你（agent）唯一该用的方式。省略密码参数会让命令弹交互式提示，而在非交互环境下它不会挂住等输入，会直接报 `stdin is not a terminal` 并告诉你该用哪个参数。
+
 `login` 把会话（access + refresh token）写入配置文件（权限 0600），`key create` 生成 API Key 并一并存进去，之后所有 `bill`/`category`/`stats` 命令都不再需要环境变量。access token 过期会自动续期，不用重新登录。
 
 用 `sumi auth status` 查当前用的是哪套凭证、来自环境还是配置文件、以及这个 key 是否真的有效。
